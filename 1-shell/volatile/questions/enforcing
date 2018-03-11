@@ -1,0 +1,1 @@
+ReadVolatile returns a pointer to const type while WriteVOlatile returns a pointer to mutable type in order to achieve their purpose.

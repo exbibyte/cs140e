@@ -1,0 +1,1 @@
+The inherent new method allows particular type to initialize itself with whatever arguments it needs to reduce number of function combinations within a trait and also allows mix and match of multiple traits which would cause a bit of problem when initializing such type.

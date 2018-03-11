@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=ext/layout.ld
+cargo:rerun-if-changed=ext/crt0.S
