@@ -47,12 +47,20 @@ pub extern "C" fn kmain() {
     use std::io::Read;
     use std::io::Write;
     
-    let mut uart = pi::uart::MiniUart::new();
+    // let mut uart = pi::uart::MiniUart::new();
 
-    let mut buf = [0;1024];
+    let mut buf = [0; 1024];
     loop {
-        uart.read( & mut buf[..] ).is_ok();
-        uart.write( &buf[..] ).is_ok();
-        uart.write( b"<-" ).is_ok();
+        // uart.read( & mut buf[..] ).is_ok();
+        // uart.write( &buf[..] ).is_ok();
+        // uart.write( b"<-" ).is_ok();
+        let bytes_len = {
+            let mut c = console::CONSOLE.lock();
+            c.read( & mut buf ).expect("num of bytes read")
+        };
+        for i in buf[0..bytes_len].iter(){
+            console::kprintln!( "{}", i );
+        }
     }
+
 }

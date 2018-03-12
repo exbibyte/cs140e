@@ -148,6 +148,8 @@ impl fmt::Write for MiniUart {
         for i in s.as_bytes() {
             self.write_byte(*i);
         }
+        // self.write_byte(b'\r');
+        // self.write_byte(b'\n');
         Ok( () )
     }
     fn write_char(&mut self, c: char) -> Result<(), fmt::Error> {
@@ -184,7 +186,7 @@ mod uart_io {
             match self.wait_for_byte() {
                 Ok(_) => {
                     //read rest of available bytes
-                    while self.has_byte() {
+                    while self.has_byte() && i < buf.len() {
                         buf[i] = self.read_byte();
                         i += 1;
                     }
