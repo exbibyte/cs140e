@@ -102,7 +102,10 @@ impl Gpio<Uninitialized> {
     /// Enables the alternative function `function` for `self`. Consumes self
     /// and returns a `Gpio` structure in the `Alt` state.
     pub fn into_alt(self, function: Function) -> Gpio<Alt> {
-        unimplemented!()
+        let fsel_idx = self.pin / 10;
+        let offset = ( self.pin - fsel_idx * 10 ) * 3;
+        (*self.registers).FSEL[ fsel_idx as usize ].or_mask( ( function as u32 ) << offset );
+        self.transition()
     }
 
     /// Sets this pin to be an _output_ pin. Consumes self and returns a `Gpio`
@@ -121,12 +124,22 @@ impl Gpio<Uninitialized> {
 impl Gpio<Output> {
     /// Sets (turns on) the pin.
     pub fn set(&mut self) {
-        unimplemented!()
+        if self.pin < 32 {
+            // let val = (*(*self.registers).SET[0].ptr());
+            (*self.registers).SET[0].write( 0b1 << self.pin );
+        } else {
+            // let val = (*(*self.registers).SET[1].ptr());
+            (*self.registers).SET[1].write( 0b1 << ( self.pin - 32 ) );
+        }
     }
 
     /// Clears (turns off) the pin.
     pub fn clear(&mut self) {
-        unimplemented!()
+        if self.pin < 32 {
+            (*self.registers).CLR[0].write( 0b1 << self.pin );
+        } else {
+            (*self.registers).CLR[1].write( 0b1 << ( self.pin - 32 ) );
+        }
     }
 }
 
@@ -134,6 +147,10 @@ impl Gpio<Input> {
     /// Reads the pin's value. Returns `true` if the level is high and `false`
     /// if the level is low.
     pub fn level(&mut self) -> bool {
-        unimplemented!()
+        if self.pin < 32 {
+            (*self.registers).LEV[0].has_mask( 0b1 << self.pin )
+        } else {
+            (*self.registers).LEV[1].has_mask( 0b1 << ( self.pin - 32 ) )
+        }
     }
 }
