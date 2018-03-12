@@ -54,9 +54,7 @@ fn main() {
     use std::io::{self};
 
     let opt = Opt::from_args();
-
     let mut serial = serial::open(&opt.tty_path).expect("path points to invalid TTY");
-
     let mut settings = serial.read_settings().unwrap();
     settings.set_baud_rate( opt.baud_rate ).is_ok();
     settings.set_flow_control( opt.flow_control );
@@ -64,9 +62,7 @@ fn main() {
     settings.set_char_size( opt.char_width );
     serial.write_settings( & settings ).is_ok();
     serial.set_timeout( Duration::from_secs(opt.timeout) ).is_ok();
-
     let mut input_buf = vec![];
-
     match opt.input {
         None => {
             let stdin = io::stdin();
@@ -80,9 +76,7 @@ fn main() {
             println!( "bytes read from file: {}", bytes_read );
         },
     }
-
     let mut buf = Cursor::new( input_buf );
-
     if opt.raw {
         //send raw
         io::copy( & mut buf, & mut serial ).expect("serial write unsuccessful");
@@ -90,7 +84,6 @@ fn main() {
         //send via XMODEM protocol
         Xmodem::transmit_with_progress( & mut buf, & mut serial, progress_fn ).expect("xmodem write unsuccessful");
     }
-    
 }
 
 fn progress_fn(progress: Progress) {

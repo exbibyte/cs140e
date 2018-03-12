@@ -113,7 +113,7 @@ Temporary Items
 
 # Build directories
 build/
-/files/
+# /files/
 
 # Submission files
 *.tar.gz
