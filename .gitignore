@@ -5,7 +5,7 @@
 *.o
 *.ko
 *.obj
-*.elf
+# *.elf
 
 # Linker output
 *.ilk
@@ -35,7 +35,7 @@
 *.i*86
 *.x86_64
 *.hex
-*.bin
+# *.bin
 *.img
 
 # Debug files
@@ -112,9 +112,9 @@ Temporary Items
 .apdisk
 
 # Submission files
-*.tar.gz
+# *.tar.gz
 
 # Assignment 0 specific
-phase4/build
-phase4/target
-files/
+../phase4/build
+../phase4/target
+# files/
