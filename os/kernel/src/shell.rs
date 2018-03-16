@@ -115,8 +115,6 @@ pub fn shell(prefix: &str) -> ! {
     let mut idx_cursor = 0;
     let mut idx_end = 0;
 
-    timer::spin_sleep_ms(500);
-
     kprint!( "{}", BANNER );
     
     kprint!( "{}", prefix );

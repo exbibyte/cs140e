@@ -42,7 +42,9 @@ pub static FILE_SYSTEM: FileSystem = FileSystem::uninitialized();
 #[cfg(not(test))]
 pub extern "C" fn kmain() {
 
-    // ALLOCATOR.initialize();
+    pi::timer::spin_sleep_ms(1000);
+    
+    ALLOCATOR.initialize();
 
     // FIXME: Start the shell.
 
