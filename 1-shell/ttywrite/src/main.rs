@@ -14,7 +14,7 @@ mod parsers;
 
 use parsers::{parse_width, parse_stop_bits, parse_flow_control, parse_baud_rate};
 
-use std::io::{ Read, Cursor };
+use std::io::{ Read, Cursor, BufReader };
 
 #[derive(StructOpt, Debug)]
 #[structopt(about = "Write to TTY using the XMODEM protocol by default.")]
@@ -62,7 +62,7 @@ fn main() {
     settings.set_char_size( opt.char_width );
     serial.write_settings( & settings ).is_ok();
     serial.set_timeout( Duration::from_secs(opt.timeout) ).is_ok();
-    let mut input_buf = vec![];
+    let mut input_buf : Vec< u8 > = vec![];
     match opt.input {
         None => {
             let stdin = io::stdin();
