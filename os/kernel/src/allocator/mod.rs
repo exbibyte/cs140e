@@ -2,6 +2,7 @@ mod linked_list;
 mod util;
 
 #[path = "bump.rs"]
+// #[path = "bin.rs"]
 mod imp;
 
 #[cfg(test)]
@@ -87,7 +88,27 @@ extern "C" {
 ///
 /// This function is expected to return `Some` under all normal cirumstances.
 fn memory_map() -> Option<(usize, usize)> {
-    let binary_end = unsafe { (&_end as *const u8) as u32 };
 
-    unimplemented!("memory map fetch")
+    use pi;
+
+    let binary_end = unsafe { (&_end as *const u8) as u32 }; //first address after kernel binary
+    
+    let mut atags : pi::atags::Atags = pi::atags::Atags::get();
+
+    let mut i = atags.current().unwrap();
+    loop {
+        match i.mem() {
+            Some( x ) => {
+                // let start = if binary_end > x.start { binary_end } else { x.start };
+                let end_of_memory = ( x.start + x.size ) as usize;
+                return Some( ( binary_end as usize, end_of_memory ) )
+            },
+            _ => {},
+        }
+        match atags.next() {
+            Some( x ) => { i = x; },
+            None => { break; },
+        }
+    }
+    None
 }

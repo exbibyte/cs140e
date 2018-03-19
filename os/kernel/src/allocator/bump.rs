@@ -13,7 +13,14 @@ impl Allocator {
     /// Creates a new bump allocator that will allocate memory from the region
     /// starting at address `start` and ending at address `end`.
     pub fn new(start: usize, end: usize) -> Allocator {
-        unimplemented!("bump allocator")
+
+        // #[cfg(test)]
+        // println!( "bump initializing allocator start, end: {}, {}", start, end );
+        
+        Self {
+            current: start,
+            end: end,
+        }
     }
 
     /// Allocates memory. Returns a pointer meeting the size and alignment
@@ -37,7 +44,24 @@ impl Allocator {
     /// (`AllocError::Exhausted`) or `layout` does not meet this allocator's
     /// size or alignment constraints (`AllocError::Unsupported`).
     pub fn alloc(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
-        unimplemented!("bump allocation")
+
+        if layout.size() == 0 {
+            return Err( AllocErr::Unsupported { details: "zero sized allocation" } )
+        }
+        
+        let start = align_up( self.current, layout.align() );
+        let end = start + layout.size();
+
+        if end > self.end {
+            return Err( AllocErr::Exhausted { request: layout } )
+        }
+
+        self.current = end; //bump
+
+        #[cfg(test)]
+        println!("bump allocated addr: {}", start );
+        
+        Ok( start as * mut u8 )
     }
 
     /// Deallocates the memory referenced by `ptr`.
@@ -54,6 +78,6 @@ impl Allocator {
     /// Parameters not meeting these conditions may result in undefined
     /// behavior.
     pub fn dealloc(&mut self, _ptr: *mut u8, _layout: Layout) {
-        unimplemented!("bump deallocation")
+        //does nothing
     }
 }

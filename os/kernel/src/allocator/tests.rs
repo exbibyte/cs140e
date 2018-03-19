@@ -159,6 +159,7 @@ mod allocator {
     });
 
     fn scribble(ptr: *mut u8, size: usize) {
+        // println!("scribbling at: {:?}, size: {}", ptr, size );
         unsafe { ::std::ptr::write_bytes(ptr, 0xAF, size); }
     }
 
@@ -267,25 +268,45 @@ mod linked_list {
 
     #[test]
     fn example_2() {
-        let address_1 = (&mut (1 as usize)) as *mut usize;
-        let address_2 = (&mut (2 as usize)) as *mut usize;
-        let address_3 = (&mut (3 as usize)) as *mut usize;
-
+        // let address_1 = (&mut (1 as usize)) as *mut usize;
+        // let address_2 = (&mut (2 as usize)) as *mut usize;
+        // let address_3 = (&mut (3 as usize)) as *mut usize;
+        let mut address_insert1 = ( 9usize, 3usize);
+        let mut address_insert2 = ( 9usize, 3usize);
+        let mut address_1 = ( 9usize, 1usize);
+        let mut address_insert3 = ( 9usize, 3usize);
+        let mut address_2 = ( 9usize, 2usize);
+        let mut address_3 = ( 9usize, 3usize);
+        let mut address_insert4 = ( 9usize, 3usize);
+        
         let mut list = LinkedList::new();
         unsafe {
-            list.push(address_1);
-            list.push(address_2);
-            list.push(address_3);
+            list.push((& mut address_3) as * mut _ as * mut usize );
+            list.push((& mut address_2) as * mut _ as * mut usize );
+            list.push((& mut address_1) as * mut ( usize, usize ) as * mut usize );
+            list.insert_ascending( (& mut address_insert2) as * mut _ as * mut usize, 0 );
+            list.insert_ascending( (& mut address_insert1) as * mut _ as * mut usize, 0 );
+            list.insert_ascending( (& mut address_insert3) as * mut _ as * mut usize, 0 );
+            list.insert_ascending( (& mut address_insert4) as * mut _ as * mut usize, 0 );
         }
-
+        
         for node in list.iter_mut() {
-            if node.value() == address_2 {
+            // if node.value() == address_2 {
+            println!( "val: {:?}", node.value() as usize );
+            if node.value() == (& mut address_2) as * mut _ as * mut usize {
                 node.pop();
             }
         }
 
-        assert_eq!(list.pop(), Some(address_3));
-        assert_eq!(list.pop(), Some(address_1));
+        // assert_eq!(list.pop(), Some(address_3));
+        // assert_eq!(list.pop(), Some(address_1));
+        // assert_eq!(list.pop(), None);
+        assert_eq!(list.pop(), Some((& mut address_insert1) as * mut _ as * mut usize));
+        assert_eq!(list.pop(), Some((& mut address_insert2) as * mut _ as * mut usize));
+        assert_eq!(list.pop(), Some((& mut address_1) as * mut _ as * mut usize));
+        assert_eq!(list.pop(), Some((& mut address_insert3) as * mut _ as * mut usize));
+        assert_eq!(list.pop(), Some((& mut address_3) as * mut _ as * mut usize));
+        assert_eq!(list.pop(), Some((& mut address_insert4) as * mut _ as * mut usize));
         assert_eq!(list.pop(), None);
     }
 

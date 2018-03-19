@@ -42,11 +42,54 @@ pub static FILE_SYSTEM: FileSystem = FileSystem::uninitialized();
 #[cfg(not(test))]
 pub extern "C" fn kmain() {
 
+    use console::{ kprintln };
+    use pi::atags::*;
+    use std::iter;
+
     pi::timer::spin_sleep_ms(1000);
+
+    kprintln!( "iterating through ATAGS.." );
+
+    let mut atags : pi::atags::Atags = pi::atags::Atags::get();
+
+    let mut i = atags.current().unwrap();
+    loop {
+        match i {
+            pi::atags::Atag::Core(x) => {
+                kprintln!( "atag core: {:#?}", x );
+            },
+            pi::atags::Atag::Mem(x) => {
+                kprintln!( "atag mem: {:#?}", x );
+            },
+            pi::atags::Atag::Cmd(x) => {
+                kprintln!( "atag cmd: {:#?}", x );
+            },
+            pi::atags::Atag::None => {
+                kprintln!( "atag none " );
+            },
+            pi::atags::Atag::Unknown( x ) => {
+                kprintln!( "unknown atag: {:#?}", x );
+            },
+        }
+        match atags.next() {
+            Some( x ) => { i = x; },
+            None => { break; },
+        }
+    }
+
+    kprintln!( "initializing allocators.." );
     
     ALLOCATOR.initialize();
 
-    // FIXME: Start the shell.
+    // let mut v = vec![];
+    // for i in 0..10 {
+    //     v.push(i);
+    //     kprintln!("{:?}", v);
+    // }
+
+    // let s = String::from( "hi!" );
+    
+    kprintln!( "starting shell.." );
 
     let mut gpio_16_out = pi::gpio::Gpio::new(16).into_output();
     gpio_16_out.set();
