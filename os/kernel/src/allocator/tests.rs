@@ -292,7 +292,7 @@ mod linked_list {
         
         for node in list.iter_mut() {
             // if node.value() == address_2 {
-            println!( "val: {:?}", node.value() as usize );
+            // println!( "val: {:?}", node.value() as usize );
             if node.value() == (& mut address_2) as * mut _ as * mut usize {
                 node.pop();
             }

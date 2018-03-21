@@ -4,7 +4,7 @@ use alloc::heap::{AllocErr, Layout};
 use allocator::util::*;
 use allocator::linked_list::LinkedList;
 
-const K : usize = 12;
+const K : usize = 13;
 
 /// A simple allocator that allocates based on size classes.
 #[derive(Debug)]
@@ -12,7 +12,7 @@ pub struct Allocator {
     start: usize,
     end: usize,
     global_start: usize,
-    // freelists: [ LinkedList; K ], //bins of 2^i for i in [1,K]
+    freelists: [ LinkedList; K ], //bins of 2^i for i in [1,K]
     global_freelist: LinkedList,
     global_busylist: LinkedList,
 }
@@ -24,28 +24,36 @@ impl Allocator {
 
         use std::mem;
         
-        #[cfg(test)]
-        println!( "bin initializing allocator start, end: {}, {}", start, end );
-        
-        // let total = end - start;
-        // let half = total / 2; //reserve half for binned freelists
-        // let division = half / K; //split equal amount for each freelist
+        // #[cfg(test)]
+        // println!( "bin initializing allocator start, end: {}, {}", start, end );
+//        let start_offset = align_up( start, 2 << (K-1) );
+
+        let total = end - start;
+        let alloc_bin = total / 2; //reserve half for binned freelists
+
+        let bin = alloc_bin / (K-1); //split approximately equal amount for each bin size
+
+        let mut freelists = [ LinkedList::new(); K ];
 
         let mut offset = start;
+        
+        for i in 1..K {
+            //setup bins for current bin size
+            let s = 2 << i;
 
-        // let mut freelists = [ LinkedList::new(); K ];
-        // for i in 0..K {
-        //     //setup bins for current bin size
-        //     offset = align_up( offset, 2 << i );
-        //     let num_bins = division / (2 << i);
-        //     for _ in 0..num_bins {
-        //         unsafe { freelists[i].push( offset as * mut usize ); }
-        //         offset += (2 << i);
-        //     }
-        // }
+            offset = align_up( offset, mem::size_of::<usize>() );
 
-        #[cfg(test)]
-        println!( "initializing freelist offset: {}", offset );
+            let n =  bin / s;
+            
+            for j in 0..n {
+                // println!("init memory addr for bin: {:#?}, size: {}", (offset +  j * s) as * mut usize, s );
+                unsafe { freelists[i-1].push( ( offset +  j * s ) as * mut usize ); }
+            }
+            offset += n * s;
+        }
+        
+        // #[cfg(test)]
+        // println!( "initializing freelist offset: {}", offset );
 
         let mut global_freelist = LinkedList::new();
         unsafe{ global_freelist.push( offset as * mut usize ); }
@@ -53,7 +61,7 @@ impl Allocator {
         let mut global_busylist = LinkedList::new();
 
         Self {
-            // freelists: freelists,
+            freelists: freelists,
             start: start,
             global_start: offset,
             end: end,
@@ -104,29 +112,35 @@ impl Allocator {
 
         size_constraint = align_up( size_constraint, mem::size_of::<usize>() );
 
-        #[cfg(test)]
-        println!( "align_adj: {}", align_adj );
-        #[cfg(test)]
-        println!( "layout_size: {}", size_constraint );
+        // #[cfg(test)]
+        // println!( "align_adj: {}", align_adj );
+        // #[cfg(test)]
+        // println!( "layout_size: {}", size_constraint );
+
+        if layout.align() == mem::size_of::<usize>() &&
+            layout.size().count_zeros() == 1 &&
+            layout.size() < (2 << (K-1))
+        {
+            assert!( size_constraint.trailing_zeros() > 0 );
+            let idx_list = size_constraint.trailing_zeros() - 1;
+            
+            let mut freelist = self.freelists[ idx_list as usize ];
+            match freelist.pop() {
+                Some( x ) => {
+                    //found slot
+                    // #[cfg(test)]
+                    // println!( "allocate through bin: {:#?}", x );
+                    return Ok( x as * mut u8 )
+                },
+                None => {
+                    // #[cfg(test)]
+                    // println!( "allocate through global pool" );
+                    //try from global pool
+                }
+            }
+        }
         
-        // for i in 1..K+1 {
-        //     if size_constraint <= (2 << i) {
-        //         //allocate from this bin
-        //         let idx_list = i - 1;
-        //         let mut freelist = self.freelists[ idx_list ];
-        //         match freelist.pop() {
-        //             Some( x ) => {
-        //                 //found slot
-        //                 return Ok( x as * mut u8 )
-        //             },
-        //             None => {
-        //                 break; //try from global pool
-        //             }
-        //         }
-        //     }
-        // }
-        
-        //Iterate through global freelist and busy list to find a free block, or else fail.
+        //First fit allocator
         //Allocate an extra pointer (to act as the header) plus the amount requested by the caller.
         //The returned address is the +1 pointer offset away from the actual allocated memory.
         
@@ -139,13 +153,13 @@ impl Allocator {
 
             let alloc_info = loop {
 
-                #[cfg(test)]
-                println!( "looping.." );
+                // #[cfg(test)]
+                // println!( "looping.." );
 
                 let ( allocate, continue_free, continue_busy ) = match ( &addr_free, &addr_busy ) {
                     ( &Some(ref f), &Some(ref b) ) => {
-                        #[cfg(test)]
-                        println!( "case 0: addr_free: {:#?}, addr_busy: {:#?}", *f, *b );
+                        // #[cfg(test)]
+                        // println!( "case 0: addr_free: {:#?}, addr_busy: {:#?}", *f, *b );
                         if (*b as usize) < (*f as usize) {
                             //continue search busylist
                             ( None, false, true )
@@ -164,8 +178,8 @@ impl Allocator {
                                 None
                             };
 
-                            #[cfg(test)]
-                            println!( "case 0: continued" );
+                            // #[cfg(test)]
+                            // println!( "case 0: continued" );
                             let e = start.saturating_add( size_constraint );
                             if e <= *b as usize {
                                 //allocate
@@ -181,8 +195,8 @@ impl Allocator {
                         }
                     },
                     ( &Some(ref f), &None ) => { //case for where there is no blocks in busylist
-                        #[cfg(test)]
-                        println!( "case 1: addr_free: {:#?}", *f );
+                        // #[cfg(test)]
+                        // println!( "case 1: addr_free: {:#?}", *f );
                         //check size constraint and allocate if possible
 
                         //reserve an extra pointer for header
@@ -197,8 +211,8 @@ impl Allocator {
                             None
                         };
 
-                        #[cfg(test)]
-                        println!( "case 1 continued: addr_free: {:#?}", *f );
+                        // #[cfg(test)]
+                        // println!( "case 1 continued: addr_free: {:#?}", *f );
                         
                         let end = start.saturating_add( size_constraint );
                         if end > self.end {
@@ -210,25 +224,25 @@ impl Allocator {
                         }
                     },
                     _  => { //case for where freelist is empty
-                        #[cfg(test)]
-                        println!( "case 2: freelist empty" );
+                        // #[cfg(test)]
+                        // println!( "case 2: freelist empty" );
                         return Err( AllocErr::Exhausted { request: layout } )
                     },
                 };
 
                 if let Some(x) = allocate {
-                    #[cfg(test)]
-                    println!("allocating...");
+                    // #[cfg(test)]
+                    // println!("allocating...");
                     break x;
                 } else {
                     if continue_free {
-                        #[cfg(test)]
-                        println!("next free block");
+                        // #[cfg(test)]
+                        // println!("next free block");
                         addr_free = iter_free.next();
                     }
                     if continue_busy {
-                        #[cfg(test)]
-                        println!("next busy block");
+                        // #[cfg(test)]
+                        // println!("next busy block");
                         addr_busy = iter_busy.next();
                     }
                 }
@@ -236,13 +250,13 @@ impl Allocator {
             alloc_info
         };
 
-        #[cfg(test)]
-        println!( "aloc info: {:?}", (fragment_start, alloc_start, fragment_end ) );
+        // #[cfg(test)]
+        // println!( "aloc info: {:?}", (fragment_start, alloc_start, fragment_end ) );
 
         if let None = fragment_start {
             for i in self.global_freelist.iter_mut() {
-                #[cfg(test)]
-                println!( "popping off alloc_start: {:#?}", alloc_start);
+                // #[cfg(test)]
+                // println!( "popping off alloc_start: {:#?}", alloc_start);
                 if i.value() as usize == alloc_start {
                     i.pop();
                     break;
@@ -250,12 +264,12 @@ impl Allocator {
             }
         }
 
-        #[cfg(test)]
-        println!( "freelist length: {:#?}", self.global_freelist.iter().count() );
+        // #[cfg(test)]
+        // println!( "freelist length: {:#?}", self.global_freelist.iter().count() );
         
         if let Some(x) = fragment_end {
-            #[cfg(test)]
-            println!( "inserting for fragment_end: {:#?}", x );
+            // #[cfg(test)]
+            // println!( "inserting for fragment_end: {:#?}", x );
             unsafe { self.global_freelist.insert_ascending( x as * mut usize, size_constraint ); }
         }
         
@@ -267,12 +281,12 @@ impl Allocator {
         assert!( (alloc_start as usize) < self.end );
         assert!( (alloc_start as usize) >= self.global_start );
         
-        #[cfg(test)]
-        println!("bin allocated addr: {:?}", ret );
-        #[cfg(test)]
-        println!( "busylist: {:?}", self.global_busylist );
-        #[cfg(test)]
-        println!( "freelist: {:?}", self.global_freelist );
+        // #[cfg(test)]
+        // println!("bin allocated addr: {:?}", ret );
+        // #[cfg(test)]
+        // println!( "busylist: {:?}", self.global_busylist );
+        // #[cfg(test)]
+        // println!( "freelist: {:?}", self.global_freelist );
         
         return Ok( ret )
     }
@@ -292,21 +306,36 @@ impl Allocator {
     /// behavior.
     pub fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
 
-        #[cfg(test)]
-        println!( "bin deallocating" );
+        use std::mem;
+
+        // #[cfg(test)]
+        // println!( "bin deallocating" );
+
+        let mut size_constraint = if mem::size_of::<usize>() > layout.size() {
+            mem::size_of::<usize>()
+        } else {
+            layout.size()
+        };
+
+        size_constraint = align_up( size_constraint, mem::size_of::<usize>() );
+
+        if (ptr as usize) < self.global_start {
+            for i in 1..K {
+                if size_constraint <= (2 << i) {
+                    //deallocate to this bin
+                    let idx_list = i - 1;
+                    let mut freelist = self.freelists[ idx_list ];
+                    unsafe { freelist.push( ptr as * mut usize ); }
+                    // #[cfg(test)]
+                    // println!( "deallocate through bins" );
+                    return ()
+                }
+            }
+        }
+
+        // #[cfg(test)]
+        // println!( "deallocate through global pool" );
         
-        // unimplemented!();
-
-        // for i in 1..K+1 {
-        //     if layout.size() <= (2 << i) {
-        //         //deallocate to this bin
-        //         let idx_list = i - 1;
-        //         let mut freelist = self.freelists[ idx_list ];
-        //         unsafe { freelist.push( ptr as * mut usize ); }
-        //         return ()
-        //     }
-        // }
-
         //deallocation to global pool and coelesce neighbouring blocks if possible
 
         //get the header of the block by offsetting -1 pointer size from ptr
@@ -393,10 +422,10 @@ impl Allocator {
 
         unsafe{ self.global_freelist.insert_ascending( put_back_to_freelist as * mut usize, layout.size() ); }
 
-        #[cfg(test)]
-        println!( "busylist: {:?}", self.global_busylist );
-        #[cfg(test)]
-        println!( "freelist: {:?}", self.global_freelist );
+        // #[cfg(test)]
+        // println!( "busylist: {:?}", self.global_busylist );
+        // #[cfg(test)]
+        // println!( "freelist: {:?}", self.global_freelist );
     }
 }
 //

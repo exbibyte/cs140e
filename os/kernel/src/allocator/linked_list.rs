@@ -125,36 +125,12 @@ impl LinkedList {
                         prev = current;
                         current = (*current) as * mut usize;  //get next item in list
                     } else {
-                        println!("unexpected address");
                         panic!("unexpected address");
                     }
                 }
             }
         }
     }
-
-    // /// find highest adress in the list that is smaller than item
-    // pub fn find_address_previous( &mut self, item: * mut usize ) -> * mut usize {
-    //     let mut prev = self.head;
-    //     if prev.is_null() {
-    //         return ptr::null_mut()
-    //     }
-    //     let mut current = unsafe { *prev as * mut usize };
-    //     loop {
-    //         if current.is_null() {
-    //             //end reached
-    //             return ptr::null_mut()
-    //         } else {
-    //             if item <= current {
-    //                 //stop search
-    //                 return prev
-    //             }
-    //             //continue search
-    //             prev = current;
-    //             current = unsafe { *current as * mut usize };
-    //         }
-    //     }
-    // }
     
     /// Removes and returns the first item in the list, if any.
     pub fn pop(&mut self) -> Option<*mut usize> {

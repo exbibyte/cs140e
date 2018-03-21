@@ -58,8 +58,8 @@ impl Allocator {
 
         self.current = end; //bump
 
-        #[cfg(test)]
-        println!("bump allocated addr: {}", start );
+        // #[cfg(test)]
+        // println!("bump allocated addr: {}", start );
         
         Ok( start as * mut u8 )
     }
