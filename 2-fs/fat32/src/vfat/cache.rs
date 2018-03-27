@@ -81,7 +81,23 @@ impl CachedDevice {
     ///
     /// Returns an error if there is an error reading the sector from the disk.
     pub fn get_mut(&mut self, sector: u64) -> io::Result<&mut [u8]> {
-        unimplemented!("CachedDevice::get_mut()")
+
+        let ( physical_sector, factor ) = self.virtual_to_physical( sector );
+
+        if !self.cache.contains_key( &physical_sector ) {
+            let mut buf = vec![];
+            for i in 0..factor {
+                self.device.read_all_sector( physical_sector + i, & mut buf )?;
+            }
+            let ce = CacheEntry{ data: buf, dirty: false };
+            self.cache.insert( physical_sector, ce );
+        }
+
+        let mut cached_entry = self.cache.get_mut( &physical_sector ).unwrap();
+
+        cached_entry.dirty = true;
+         
+        Ok( cached_entry.data.as_mut_slice() )
     }
 
     /// Returns a reference to the cached sector `sector`. If the sector is not
@@ -91,7 +107,21 @@ impl CachedDevice {
     ///
     /// Returns an error if there is an error reading the sector from the disk.
     pub fn get(&mut self, sector: u64) -> io::Result<&[u8]> {
-        unimplemented!("CachedDevice::get()")
+
+        let ( physical_sector, factor ) = self.virtual_to_physical( sector );
+
+        if !self.cache.contains_key( &physical_sector ) {
+            let mut buf = vec![];
+            for i in 0..factor {
+                self.device.read_all_sector( physical_sector + i, & mut buf )?;
+            }
+            let ce = CacheEntry{ data: buf, dirty: false };
+            self.cache.insert( physical_sector, ce );
+        }
+
+        let cached_entry = self.cache.get( &physical_sector ).unwrap();
+
+        Ok( cached_entry.data.as_slice() )
     }
 }
 

@@ -5,6 +5,7 @@ use mbr;
 #[derive(Debug)]
 pub enum Error {
     Mbr(mbr::Error),
+    Ebpb,
     Io(io::Error),
     BadSignature,
     NotFound
