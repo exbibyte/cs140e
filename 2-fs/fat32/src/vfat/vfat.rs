@@ -12,12 +12,12 @@ use traits::{FileSystem, BlockDevice};
 #[derive(Debug)]
 pub struct VFat {
     device: CachedDevice,
-    bytes_per_sector: u16,
-    sectors_per_cluster: u8,
+    pub bytes_per_sector: u16,
+    pub sectors_per_cluster: u8,
     sectors_per_fat: u32,
     fat_start_sector: u64,
     data_start_sector: u64,
-    root_dir_cluster: Cluster,
+    pub root_dir_cluster: Cluster,
 }
 
 impl VFat {
@@ -71,7 +71,7 @@ impl VFat {
     //
     //  * A method to read from an offset of a cluster into a buffer.
 
-    fn read_cluster(
+    pub fn read_cluster(
         &mut self,
         cluster: Cluster,
         offset: usize, //offset in bytes
@@ -94,6 +94,9 @@ impl VFat {
 
         let mut read = 0;
         loop {
+
+            // println!("read cluster loop");
+            
             if read >= len_to_read {
                 break;
             }
@@ -124,7 +127,7 @@ impl VFat {
     //  * A method to read all of the clusters chained from a starting cluster
     //    into a vector.
 
-    fn read_chain(
+    pub fn read_chain(
         &mut self,
         start: Cluster,
         buf: &mut Vec<u8>
@@ -150,6 +153,8 @@ impl VFat {
         }
         
         loop {
+
+            // println!("read chain loop");
             
             if let Some(x) = cycle_detect {
                 if current.cluster_num() == x.cluster_num() {
@@ -201,7 +206,7 @@ impl VFat {
     //  * A method to return a reference to a `FatEntry` for a cluster where the
     //    reference points directly into a cached sector.
 
-    fn fat_entry(&mut self, cluster: Cluster) -> io::Result<&FatEntry> {
+    pub fn fat_entry(&mut self, cluster: Cluster) -> io::Result<&FatEntry> {
 
         use std::mem;
         use std::slice;
@@ -219,12 +224,59 @@ impl VFat {
 }
 
 impl<'a> FileSystem for &'a Shared<VFat> {
-    type File = ::traits::Dummy;
-    type Dir = ::traits::Dummy;
-    type Entry = ::traits::Dummy;
+
+    type File = File;
+    type Dir = Dir;
+    type Entry = Entry;
 
     fn open<P: AsRef<Path>>(self, path: P) -> io::Result<Self::Entry> {
-        unimplemented!("FileSystem::open()")
+
+        use std::path::Component;
+        
+        let p = path.as_ref();
+        if !p.is_absolute() {
+            return Err( io::Error::new( io::ErrorKind::InvalidInput, "path is not absolute" ) )
+        }
+        let mut v = Vec::new();
+        for c in p.components() {
+            match c {
+                Component::RootDir => {
+                    v.clear();
+                    let d = Dir::new_dir( self );
+                    {
+                        use traits::Dir;
+                        v.push( Entry::Dir(d) );
+                    }
+                },
+                Component::Normal(x) => {
+                    let e = if let Some(entry) = v.last() {
+                        use traits::Entry;
+                        if let Some(d) = entry.as_dir() {
+                            Some( d.find(x)? )
+                        } else {
+                            None
+                        }
+                    } else {
+                        None                 
+                    };
+                    match e {
+                        Some(y) => {
+                            v.push(y);
+                        },
+                        None => {
+                            return Err( io::Error::new( io::ErrorKind::NotFound, "file cannot be found" ) )
+                        }
+                    }
+                },
+                Component::ParentDir => { v.pop(); },
+                Component::CurDir => {},
+                _ => { unimplemented!(); },
+            }
+        }
+        match v.into_iter().last() {
+            Some(x) => { Ok(x) },
+            _ => { Err( io::Error::new( io::ErrorKind::NotFound, "file cannot be found" ) ) },
+        }
     }
 
     fn create_file<P: AsRef<Path>>(self, _path: P) -> io::Result<Self::File> {

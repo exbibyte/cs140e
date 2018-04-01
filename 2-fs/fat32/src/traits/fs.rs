@@ -22,6 +22,8 @@ pub trait Dir: Sized {
 
     /// Returns an interator over the entries in this directory.
     fn entries(&self) -> io::Result<Self::Iter>;
+
+    // fn new_dir( vfat: & Shared<VFat> ) -> Self;
 }
 
 /// Trait implemented by directory entries in a file system.

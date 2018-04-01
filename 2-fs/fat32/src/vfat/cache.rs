@@ -19,7 +19,7 @@ pub struct Partition {
 pub struct CachedDevice {
     device: Box<BlockDevice>,
     cache: HashMap<u64, CacheEntry>,
-    partition: Partition
+    partition: Partition,
 }
 
 impl CachedDevice {

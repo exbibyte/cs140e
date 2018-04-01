@@ -31,6 +31,8 @@ impl Dir for Dummy {
 
     /// Returns an interator over the entries in this directory.
     fn entries(&self) -> io::Result<Self::Iter> { panic!("Dummy") }
+
+    // fn new_dir( vfat: & Shared<VFat> ) -> Self { panic!("Dummy") }
 }
 
 impl Iterator for Dummy {
@@ -67,4 +69,10 @@ impl Metadata for Dummy {
     fn created(&self) -> Self::Timestamp { panic!("Dummy") }
     fn accessed(&self) -> Self::Timestamp { panic!("Dummy") }
     fn modified(&self) -> Self::Timestamp { panic!("Dummy") }
+    fn system(&self) -> bool { panic!("Dummy") }
+    fn volume_id(&self) -> bool { panic!("Dummy") }
+    fn is_lfn_entry(&self) -> bool { panic!("Dummy") }
+    fn is_directory(&self) -> bool { panic!("Dummy") }
+    fn is_archive(&self) -> bool { panic!("Dummy") }
+    fn first_cluster_num(&self) -> u32 { panic!("Dummy") }
 }

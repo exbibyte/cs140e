@@ -34,6 +34,16 @@ pub trait Metadata: Sized {
     /// Whether the entry should be "hidden" from directory traversals.
     fn hidden(&self) -> bool;
 
+    fn system(&self) -> bool;
+
+    fn volume_id(&self) -> bool;
+
+    fn is_lfn_entry(&self) -> bool;
+
+    fn is_directory(&self) -> bool;
+
+    fn is_archive(&self) -> bool;
+    
     /// The timestamp when the entry was created.
     fn created(&self) -> Self::Timestamp;
 
@@ -42,5 +52,7 @@ pub trait Metadata: Sized {
 
     /// The timestamp for the entry's last modification.
     fn modified(&self) -> Self::Timestamp;
+
+    fn first_cluster_num(&self) -> u32;
 }
 
