@@ -192,20 +192,20 @@ fn hash_dir_from<P: AsRef<Path>>(vfat: Shared<VFat>, path: P) -> String {
     hash
 }
 
-// #[test]
-// fn test_root_entries() {
-//     let hash = hash_dir_from(vfat_from_resource!("mock1.fat32.img"), "/");
-//     assert_hash_eq!("mock 1 root directory", hash, hash_for!("root-entries-1"));
+#[test]
+fn test_root_entries() {
+    let hash = hash_dir_from(vfat_from_resource!("mock1.fat32.img"), "/");
+    assert_hash_eq!("mock 1 root directory", hash, hash_for!("root-entries-1"));
 
-//     let hash = hash_dir_from(vfat_from_resource!("mock2.fat32.img"), "/");
-//     assert_hash_eq!("mock 2 root directory", hash, hash_for!("root-entries-2"));
+    let hash = hash_dir_from(vfat_from_resource!("mock2.fat32.img"), "/");
+    assert_hash_eq!("mock 2 root directory", hash, hash_for!("root-entries-2"));
 
-//     let hash = hash_dir_from(vfat_from_resource!("mock3.fat32.img"), "/");
-//     assert_hash_eq!("mock 3 root directory", hash, hash_for!("root-entries-3"));
+    let hash = hash_dir_from(vfat_from_resource!("mock3.fat32.img"), "/");
+    assert_hash_eq!("mock 3 root directory", hash, hash_for!("root-entries-3"));
 
-//     let hash = hash_dir_from(vfat_from_resource!("mock4.fat32.img"), "/");
-//     assert_hash_eq!("mock 4 root directory", hash, hash_for!("root-entries-4"));
-// }
+    let hash = hash_dir_from(vfat_from_resource!("mock4.fat32.img"), "/");
+    assert_hash_eq!("mock 4 root directory", hash, hash_for!("root-entries-4"));
+}
 
 fn hash_dir_recursive<P: AsRef<Path>>(
     hash: &mut String,
@@ -226,10 +226,8 @@ fn hash_dir_recursive<P: AsRef<Path>>(
     for entry in entries {
         if entry.is_dir() && entry.name() != "." && entry.name() != ".." {
             let path = path.join(entry.name());
-            println!("recursve dir");
             hash_dir_recursive(hash, vfat.clone(), path)?;
         }
-        println!("entry traversal");
     }
 
     Ok(())
@@ -246,14 +244,14 @@ fn test_all_dir_entries() {
     let hash = hash_dir_recursive_from(vfat_from_resource!("mock1.fat32.img"), "/");
     assert_hash_eq!("mock 1 all dir entries", hash, hash_for!("all-entries-1"));
 
-    // let hash = hash_dir_recursive_from(vfat_from_resource!("mock2.fat32.img"), "/");
-    // assert_hash_eq!("mock 2 all dir entries", hash, hash_for!("all-entries-2"));
+    let hash = hash_dir_recursive_from(vfat_from_resource!("mock2.fat32.img"), "/");
+    assert_hash_eq!("mock 2 all dir entries", hash, hash_for!("all-entries-2"));
 
-    // let hash = hash_dir_recursive_from(vfat_from_resource!("mock3.fat32.img"), "/");
-    // assert_hash_eq!("mock 3 all dir entries", hash, hash_for!("all-entries-3"));
+    let hash = hash_dir_recursive_from(vfat_from_resource!("mock3.fat32.img"), "/");
+    assert_hash_eq!("mock 3 all dir entries", hash, hash_for!("all-entries-3"));
 
-    // let hash = hash_dir_recursive_from(vfat_from_resource!("mock4.fat32.img"), "/");
-    // assert_hash_eq!("mock 4 all dir entries", hash, hash_for!("all-entries-4"));
+    let hash = hash_dir_recursive_from(vfat_from_resource!("mock4.fat32.img"), "/");
+    assert_hash_eq!("mock 4 all dir entries", hash, hash_for!("all-entries-4"));
 }
 
 fn hash_file<T: File>(hash: &mut String, mut file: T) -> ::std::fmt::Result {
@@ -322,11 +320,11 @@ fn hash_files_recursive_from<P: AsRef<Path>>(vfat: Shared<VFat>, path: P) -> Str
     hash
 }
 
-// #[test]
-// fn test_mock1_files_recursive() {
-//     let hash = hash_files_recursive_from(vfat_from_resource!("mock1.fat32.img"), "/");
-//     assert_hash_eq!("mock 1 file hashes", hash, hash_for!("files-1"));
-// }
+#[test]
+fn test_mock1_files_recursive() {
+    let hash = hash_files_recursive_from(vfat_from_resource!("mock1.fat32.img"), "/");
+    assert_hash_eq!("mock 1 file hashes", hash, hash_for!("files-1"));
+}
 
 // #[test]
 // fn test_mock2_files_recursive() {

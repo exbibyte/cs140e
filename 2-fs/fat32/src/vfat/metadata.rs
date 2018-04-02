@@ -49,7 +49,7 @@ impl traits::Timestamp for Timestamp {
     /// The year is not offset. 2009 is 2009.
     fn year(&self) -> usize {
         //bits 15-9, time epoche starts at 0 = 1980
-        ( ( self.date.0 as usize & ( ( (1 << 7) - 1) << 9 ) ) >> 9 ) + 1980
+        ( ( self.date.0 >> 9 ) as usize & ( (1 << 7) - 1 ) ) + 1980
     }
 
     /// The calendar month, starting at 1 for January. Always in range [1, 12].
@@ -57,30 +57,30 @@ impl traits::Timestamp for Timestamp {
     /// January is 1, Feburary is 2, ..., December is 12.
     fn month(&self) -> u8 {
         //bits 8-5
-        ( ( self.date.0 as usize & ( ( 1 << 4 ) - 1 ) ) >> 5 ) as u8
+        ( self.date.0 >> 5 ) as u8 & ( ( 1u8 << 4 ) - 1 )
     }
 
     /// The calendar day, starting at 1. Always in range [1, 31].
     fn day(&self) -> u8 {
         //bits 4-0
-        ( self.date.0 as usize & ( ( 1 << 5 ) - 1 ) ) as u8
+        ( ( self.date.0 as usize ) & ( ( 1 << 5 ) - 1 ) ) as u8
     }
 
     /// The 24-hour hour. Always in range [0, 24).
     fn hour(&self) -> u8 {
         //bits 15-11
-        ( ( self.time.0 as usize & ( ( 1 << 5 ) - 1 ) ) >> 11 ) as u8
+        ( self.time.0 >> 11 ) as u8 & ( ( 1u8 << 6 ) - 1 )
     }
 
     /// The minute. Always in range [0, 60).
     fn minute(&self) -> u8 {
         //bits 10-5
-        ( ( self.time.0 as usize & ( ( 1 << 6 ) - 1 ) ) >> 5 ) as u8
+        ( ( self.time.0 >> 5 ) as usize & ( ( 1usize << 6 ) - 1 ) ) as u8
     }
 
     /// The second. Always in range [0, 60).
     fn second(&self) -> u8 {
-        ( ( self.time.0 as usize & ( ( 1 << 5 ) - 1 ) ) * 2 ) as u8
+        ( ( self.time.0 as usize & ( ( 1usize << 5 ) - 1 ) ) * 2 ) as u8
     }
 }
 

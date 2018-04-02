@@ -89,7 +89,8 @@ impl io::Read for File {
         use traits::Dir;
 
         let len_read_max = {
-            let bytes_left = self.current_offset - self.size;
+            let bytes_left = self.size - self.current_offset;
+            // println!("bytes_left: {}", bytes_left );
             if buf.len() < bytes_left {
                 buf.len()
             } else {
@@ -123,6 +124,7 @@ impl io::Read for File {
                 
             }
 
+            println!("read bytes: {}", r );
             read += r;
             offset_in_current_cluster = 0; //zero offset after first read
         }
