@@ -326,23 +326,23 @@ fn test_mock1_files_recursive() {
     assert_hash_eq!("mock 1 file hashes", hash, hash_for!("files-1"));
 }
 
-// #[test]
-// fn test_mock2_files_recursive() {
-//     let hash = hash_files_recursive_from(vfat_from_resource!("mock2.fat32.img"), "/");
-//     assert_hash_eq!("mock 2 file hashes", hash, hash_for!("files-2-3-4"));
-// }
+#[test]
+fn test_mock2_files_recursive() {
+    let hash = hash_files_recursive_from(vfat_from_resource!("mock2.fat32.img"), "/");
+    assert_hash_eq!("mock 2 file hashes", hash, hash_for!("files-2-3-4"));
+}
 
-// #[test]
-// fn test_mock3_files_recursive() {
-//     let hash = hash_files_recursive_from(vfat_from_resource!("mock3.fat32.img"), "/");
-//     assert_hash_eq!("mock 3 file hashes", hash, hash_for!("files-2-3-4"));
-// }
+#[test]
+fn test_mock3_files_recursive() {
+    let hash = hash_files_recursive_from(vfat_from_resource!("mock3.fat32.img"), "/");
+    assert_hash_eq!("mock 3 file hashes", hash, hash_for!("files-2-3-4"));
+}
 
-// #[test]
-// fn test_mock4_files_recursive() {
-//     let hash = hash_files_recursive_from(vfat_from_resource!("mock4.fat32.img"), "/");
-//     assert_hash_eq!("mock 4 file hashes", hash, hash_for!("files-2-3-4"));
-// }
+#[test]
+fn test_mock4_files_recursive() {
+    let hash = hash_files_recursive_from(vfat_from_resource!("mock4.fat32.img"), "/");
+    assert_hash_eq!("mock 4 file hashes", hash, hash_for!("files-2-3-4"));
+}
 
 #[test]
 fn shared_fs_is_sync_send_static() {

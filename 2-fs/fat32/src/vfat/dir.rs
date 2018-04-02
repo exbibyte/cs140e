@@ -210,8 +210,10 @@ impl Iterator for VFatEntryIterator {
                     }
                 } else {
                     let regular_entry = unsafe { &entries[0].regular };
+                    
                     let short_name = str::from_utf8( &regular_entry.file_name ).unwrap().trim_right();
                     let short_ext = str::from_utf8( &regular_entry.file_extension ).unwrap().trim_right();
+                    
                     let short_file_name = if short_ext.len() > 0 {
                         let mut s = String::from( short_name );
                         s.push_str( &"." );

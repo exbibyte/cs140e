@@ -90,7 +90,6 @@ impl io::Read for File {
 
         let len_read_max = {
             let bytes_left = self.size - self.current_offset;
-            // println!("bytes_left: {}", bytes_left );
             if buf.len() < bytes_left {
                 buf.len()
             } else {
@@ -106,31 +105,41 @@ impl io::Read for File {
 
         let mut read = 0;
 
+        let mut read_cluster = 0;
+        
         while read < len_read_max {
             let r = fs.read_cluster( cluster, offset_in_current_cluster, & mut buf[read..len_read_max] )?;
-            if r == self.bytes_per_cluster {
+            read_cluster += r;
+            let exit = if read_cluster + offset_in_current_cluster == self.bytes_per_cluster {
                 //move to next cluster
                 match fs.fat_entry( cluster )?.status() {
                     Status::Data(x) => {
                         cluster = x;
+                        read_cluster = 0;
+                        false
                     },
                     Status::Eoc(_) => {
-                        break;
+                        true
                     },
                     _ => {
-                        return Err( io::Error::new( io::ErrorKind::InvalidData, "next cluster invalid" ) )
+                        return Err( io::Error::new( io::ErrorKind::InvalidData, "next cluster invalid" ) );
                     }
                 }
-                
-            }
+            } else {
+                false
+            };
 
-            println!("read bytes: {}", r );
+            // println!("read bytes: {}", r );
             read += r;
             offset_in_current_cluster = 0; //zero offset after first read
+
+            if exit {
+                break;
+            }
         }
         self.current_cluster = cluster;
-        self.current_offset += read;
-        Ok( read )
+        self.current_offset += len_read_max;
+        Ok( len_read_max )
     }
     
 }

@@ -78,15 +78,16 @@ impl VFat {
         buf: &mut [u8]
     ) -> io::Result<usize> {
 
-        let len_bytes_cluster = self.bytes_per_sector as usize * self.sectors_per_cluster as usize;
-
+        // let len_bytes_cluster = self.bytes_per_sector as usize * self.sectors_per_cluster as usize;
+        let len_bytes_cluster = self.device.partition.sector_size as usize * self.sectors_per_cluster as usize;
+        
         let mut sector = self.data_start_sector as usize +
             (cluster.cluster_num() as usize - 2usize ) * self.sectors_per_cluster as usize + //data clusters starts at 2
             offset as usize / self.bytes_per_sector as usize;
 
         let mut bytes_remain = offset % self.bytes_per_sector as usize;
 
-        let len_to_read = if buf.len() < len_bytes_cluster - bytes_remain {
+        let len_to_read = if buf.len() < ( len_bytes_cluster - bytes_remain ) {
             buf.len()
         } else {
             len_bytes_cluster - bytes_remain
@@ -97,7 +98,7 @@ impl VFat {
 
             // println!("read cluster loop");
             
-            if read >= len_to_read {
+            if read == len_to_read {
                 break;
             }
             
@@ -105,14 +106,13 @@ impl VFat {
             
             let device_read = sector_data.len();
 
-            let len_copy = {
-                let a = device_read - bytes_remain;
-                if a < len_to_read {
-                    a
-                } else {
-                    len_to_read
-                }
-            };            
+            let mut len_copy = device_read - bytes_remain;
+
+            len_copy = if len_to_read < len_copy + read {
+                len_to_read - read
+            } else {
+                len_copy
+            };
             
             buf[ read.. read + len_copy ].copy_from_slice( &sector_data[ bytes_remain.. bytes_remain + len_copy ] );
 
@@ -121,7 +121,7 @@ impl VFat {
             read += len_copy;
         }
 
-        Ok( read )
+        Ok( len_to_read )
     }
 
     //  * A method to read all of the clusters chained from a starting cluster
