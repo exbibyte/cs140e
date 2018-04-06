@@ -78,27 +78,27 @@ impl VFat {
         buf: &mut [u8]
     ) -> io::Result<usize> {
 
-        // let len_bytes_cluster = self.bytes_per_sector as usize * self.sectors_per_cluster as usize;
-        let len_bytes_cluster = self.device.partition.sector_size as usize * self.sectors_per_cluster as usize;
+        let sector_size = self.device.sector_size() as usize;
+        let len_bytes_cluster = sector_size * self.sectors_per_cluster as usize;
         
         let mut sector = self.data_start_sector as usize +
             (cluster.cluster_num() as usize - 2usize ) * self.sectors_per_cluster as usize + //data clusters starts at 2
             offset as usize / self.bytes_per_sector as usize;
 
-        let mut bytes_remain = offset % self.bytes_per_sector as usize;
-
-        let len_to_read = if buf.len() < ( len_bytes_cluster - bytes_remain ) {
+        //amount of data to read
+        let len_to_read = if buf.len() < len_bytes_cluster - offset {
             buf.len()
         } else {
-            len_bytes_cluster - bytes_remain
+            len_bytes_cluster - offset
         };
+
+        //starting offset of the read
+        let mut bytes_remain = offset % self.bytes_per_sector as usize;
 
         let mut read = 0;
         loop {
 
-            // println!("read cluster loop");
-            
-            if read == len_to_read {
+            if read >= len_to_read {
                 break;
             }
             
@@ -106,22 +106,21 @@ impl VFat {
             
             let device_read = sector_data.len();
 
-            let mut len_copy = device_read - bytes_remain;
-
-            len_copy = if len_to_read < len_copy + read {
+            //amount of data to be read from the current sector
+            let len_copy = if len_to_read - read < sector_size - bytes_remain {
                 len_to_read - read
             } else {
-                len_copy
+                sector_size - bytes_remain
             };
             
             buf[ read.. read + len_copy ].copy_from_slice( &sector_data[ bytes_remain.. bytes_remain + len_copy ] );
 
-            bytes_remain = 0;
+            bytes_remain = 0; //zero the offset after first read
             sector += 1;
             read += len_copy;
         }
 
-        Ok( len_to_read )
+        Ok( read )
     }
 
     //  * A method to read all of the clusters chained from a starting cluster

@@ -28,9 +28,20 @@ extern "C" {
 // FIXME: Define a `#[no_mangle]` `wait_micros` function for use by `libsd`.
 // The `wait_micros` C signature is: `void wait_micros(unsigned int);`
 
+#[no_mangle]
+pub extern "C" fn wait_micros( time_us: u32 ) {
+    use pi;
+    // pi::timer::spin_sleep_us( time_us as u64 * 100  );
+    pi::timer::spin_sleep_us( ( time_us as u64 ) * 1000u64 );
+}
+
 #[derive(Debug)]
 pub enum Error {
     // FIXME: Fill me in.
+    Timeout,
+    SendCommand,
+    Controller(u32),
+    Unknown,
 }
 
 /// A handle to an SD card controller.
@@ -40,7 +51,13 @@ pub struct Sd;
 impl Sd {
     /// Initializes the SD card controller and returns a handle to it.
     pub fn new() -> Result<Sd, Error> {
-        unimplemented!("Sd::new()")
+
+        match unsafe { sd_init() } {
+            0 => Ok( Sd {} ),
+            -1 => Err( Error::Timeout ),
+            -2 => Err( Error::SendCommand ),
+            _ => Err( Error::Unknown ),
+        }
     }
 }
 
@@ -58,7 +75,22 @@ impl BlockDevice for Sd {
     ///
     /// An error of kind `Other` is returned for all other errors.
     fn read_sector(&mut self, n: u64, buf: &mut [u8]) -> io::Result<usize> {
-        unimplemented!("Sd::read_sector()")
+
+        if buf.len() < 512 || n >= 1 << 32 {
+            return Err( io::Error::new( io::ErrorKind::InvalidInput, "invalid buffer or read size" ) )
+        }
+        
+        let ret = unsafe { sd_readsector( n as i32, buf.as_mut_ptr() ) };
+
+        if ret > 0 {
+            Ok( ret as usize )
+        } else {
+            match unsafe { sd_err } {
+                -1 => Err( io::Error::new( io::ErrorKind::TimedOut, "timeout" ) ),
+                -2 => Err( io::Error::new( io::ErrorKind::Other, "send command" ) ),
+                _ => Err( io::Error::new( io::ErrorKind::Other, "other error" ) ),
+            }
+        }
     }
 
     fn write_sector(&mut self, _n: u64, _buf: &[u8]) -> io::Result<usize> {

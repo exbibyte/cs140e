@@ -41,11 +41,11 @@ impl io::Seek for File {
         
         let p = match pos {
             SeekFrom::Start(x) => { x as u64 },
-            SeekFrom::Current(x) => { ( self.current_offset as i64 + x ) as u64 },
-            SeekFrom::End(x) => { ( self.size as i64 + x ) as u64 },
+            SeekFrom::Current(x) => { ( self.current_offset as i64 ).wrapping_add( x as i64 ) as u64 },
+            SeekFrom::End(x) => { ( self.size as i64 ).wrapping_add( x as i64 ) as u64 },
         } as usize;
 
-        if p > self.size {
+        if p >= self.size {
             return Err( io::Error::new( io::ErrorKind::InvalidInput, "seeking past end of the file" ) )
         } else {
             //get the cluster location of the desired position and update internal state
@@ -105,17 +105,18 @@ impl io::Read for File {
 
         let mut read = 0;
 
-        let mut read_cluster = 0;
+        // let mut read_cluster = 0;
         
         while read < len_read_max {
             let r = fs.read_cluster( cluster, offset_in_current_cluster, & mut buf[read..len_read_max] )?;
-            read_cluster += r;
-            let exit = if read_cluster + offset_in_current_cluster == self.bytes_per_cluster {
+            // read_cluster += r;
+            // let exit = if read_cluster + offset_in_current_cluster == self.bytes_per_cluster {
+            let exit = if r + offset_in_current_cluster == self.bytes_per_cluster {
                 //move to next cluster
                 match fs.fat_entry( cluster )?.status() {
                     Status::Data(x) => {
                         cluster = x;
-                        read_cluster = 0;
+                        // read_cluster = 0;
                         false
                     },
                     Status::Eoc(_) => {

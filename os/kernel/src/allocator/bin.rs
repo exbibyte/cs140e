@@ -36,21 +36,22 @@ impl Allocator {
         let mut freelists = [ LinkedList::new(); K ];
 
         let mut offset = start;
-        
-        for i in 1..K {
-            //setup bins for current bin size
-            let s = 2 << i;
 
-            offset = align_up( offset, mem::size_of::<usize>() );
+        //todo:
+        // for i in 1..K {
+        //     //setup bins for current bin size
+        //     let s = 2 << i;
 
-            let n =  bin / s;
+        //     offset = align_up( offset, mem::size_of::<usize>() );
+
+        //     let n =  bin / s;
             
-            for j in 0..n {
-                // println!("init memory addr for bin: {:#?}, size: {}", (offset +  j * s) as * mut usize, s );
-                unsafe { freelists[i-1].push( ( offset +  j * s ) as * mut usize ); }
-            }
-            offset += n * s;
-        }
+        //     for j in 0..n {
+        //         // println!("init memory addr for bin: {:#?}, size: {}", (offset +  j * s) as * mut usize, s );
+        //         unsafe { freelists[i-1].push( ( offset +  j * s ) as * mut usize ); }
+        //     }
+        //     offset += n * s;
+        // }
         
         // #[cfg(test)]
         // println!( "initializing freelist offset: {}", offset );
@@ -117,28 +118,29 @@ impl Allocator {
         // #[cfg(test)]
         // println!( "layout_size: {}", size_constraint );
 
-        if layout.align() == mem::size_of::<usize>() &&
-            layout.size().count_zeros() == 1 &&
-            layout.size() < (2 << (K-1))
-        {
-            assert!( size_constraint.trailing_zeros() > 0 );
-            let idx_list = size_constraint.trailing_zeros() - 1;
+        //todo:
+        // if layout.align() == mem::size_of::<usize>() &&
+        //     layout.size().count_zeros() == 1 &&
+        //     layout.size() < (2 << (K-1))
+        // {
+        //     assert!( size_constraint.trailing_zeros() > 0 );
+        //     let idx_list = size_constraint.trailing_zeros() - 1;
             
-            let mut freelist = self.freelists[ idx_list as usize ];
-            match freelist.pop() {
-                Some( x ) => {
-                    //found slot
-                    // #[cfg(test)]
-                    // println!( "allocate through bin: {:#?}", x );
-                    return Ok( x as * mut u8 )
-                },
-                None => {
-                    // #[cfg(test)]
-                    // println!( "allocate through global pool" );
-                    //try from global pool
-                }
-            }
-        }
+        //     let mut freelist = self.freelists[ idx_list as usize ];
+        //     match freelist.pop() {
+        //         Some( x ) => {
+        //             //found slot
+        //             // #[cfg(test)]
+        //             // println!( "allocate through bin: {:#?}", x );
+        //             return Ok( x as * mut u8 )
+        //         },
+        //         None => {
+        //             // #[cfg(test)]
+        //             // println!( "allocate through global pool" );
+        //             //try from global pool
+        //         }
+        //     }
+        // }
         
         //First fit allocator
         //Allocate an extra pointer (to act as the header) plus the amount requested by the caller.

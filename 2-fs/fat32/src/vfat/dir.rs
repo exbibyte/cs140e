@@ -126,7 +126,7 @@ impl traits::Dir for Dir {
 
     /// Returns an interator over the entries in this directory.
     fn entries(&self) -> io::Result<Self::Iter> {
-        let mut d = vec![];
+        let mut d = Vec::new();
         let mut fs = self.vfat.borrow_mut();
         let r = fs.read_chain( self.first_cluster, & mut d )?;
         // println!("read bytes: {}, data stored: {}", r, d.len() );
@@ -160,19 +160,28 @@ impl Iterator for VFatEntryIterator {
         use std::mem;
 
         let mut lfn_buf : Vec<u8> = vec![];
+
+        let mut offset = self.idx * mem::size_of::< VFatDirEntry >();
+        let num_entries = ( self.data.len() - offset ) / mem::size_of::< VFatDirEntry >();
+        assert!( num_entries > 0 );
+
         loop {
-            let offset = self.idx * mem::size_of::< VFatDirEntry >();
+
+            offset = self.idx * mem::size_of::< VFatDirEntry >();
+
             // println!("looping... at offset: {}. data len: {}. idx: {}", offset, self.data.len(), self.idx );
             if offset >= self.data.len() {
                 // println!("returning none");                
                 return None
             } else {
-                let num_entries = ( self.data.len() - offset ) / mem::size_of::< VFatDirEntry >();
-                assert!( num_entries > 0 );
-                let entries = unsafe { slice::from_raw_parts( self.data[ offset.. ].as_ptr() as * const VFatDirEntry, num_entries ) };
+
+                // let entries = unsafe { slice::from_raw_parts( self.data[ offset.. ].as_ptr() as * const VFatDirEntry, num_entries ) };
+                // let entries = unsafe { slice::from_raw_parts( ( self.data.as_ptr() as * const VFatDirEntry ).offset( self.idx as isize ), 1 ) };
+
+                let entries = unsafe { slice::from_raw_parts( ( self.data.as_ptr() as * const VFatDirEntry ).offset( self.idx as isize ), 1 ) };
 
                 //take care of different cases of the VFatDirEntry
-                let unknown_entry = unsafe { &entries[0].unknown };
+                let unknown_entry = unsafe { entries[0].unknown };
 
                 match unknown_entry._data_0[0] { //check the first byte
                     0x00 => { //previous entry was the last entry
@@ -190,7 +199,7 @@ impl Iterator for VFatEntryIterator {
                 
                 let attrib = & unknown_entry.attrib; //peek at attrib field of the unknown entry
                 if attrib.0 == 0x0F {
-                    let lfn_entry = unsafe { &entries[0].long_filename };
+                    let lfn_entry = unsafe { entries[0].long_filename };
                     match lfn_entry.sequence_num & 0b11111 {
                         entry_num @ 0x01...0x1F => {
                             let index = entry_num as usize - 1;
@@ -209,10 +218,19 @@ impl Iterator for VFatEntryIterator {
                         _ => {},
                     }
                 } else {
-                    let regular_entry = unsafe { &entries[0].regular };
-                    
-                    let short_name = str::from_utf8( &regular_entry.file_name ).unwrap().trim_right();
-                    let short_ext = str::from_utf8( &regular_entry.file_extension ).unwrap().trim_right();
+                    let regular_entry = unsafe { entries[0].regular };
+
+                    // let mut temp = regular_entry.file_name.clone();
+                    // if temp[0] == 0x05 {
+                    //     temp[0] = 0xE5;
+                    // }
+                    // let short_name = str::from_utf8( &temp ).unwrap().trim_right();
+                    let short_file_name = regular_entry.file_name.clone();
+                    let short_file_ext = regular_entry.file_extension.clone();
+                    // let short_name = str::from_utf8( &regular_entry.file_name ).unwrap().trim_right();
+                    // let short_ext = str::from_utf8( &regular_entry.file_extension ).unwrap().trim_right();
+                    let short_name = str::from_utf8( &short_file_name ).unwrap().trim_right();
+                    let short_ext = str::from_utf8( &short_file_ext ).unwrap().trim_right();
                     
                     let short_file_name = if short_ext.len() > 0 {
                         let mut s = String::from( short_name );
@@ -231,7 +249,8 @@ impl Iterator for VFatEntryIterator {
                     let lfn = if lfn_buf.len() > 0 {
                         // println!("size of lfn_buf: {}", lfn_buf.len() );
                         let lfn_utf16 = unsafe { slice::from_raw_parts( mem::transmute::< * const u8, * const u16 >(  &lfn_buf[0] as * const u8 ), lfn_buf.len() / 2 )};
-                        let lfn_end = lfn_utf16.iter().position( |x| *x == 0 );
+                        //find early termination character
+                        let lfn_end = lfn_utf16.iter().position( |x| *x == 0x00 || *x == 0xFF );
                         if let Some(x) = lfn_end {
                             String::from_utf16( &lfn_utf16[..x] ).unwrap()
                         } else {

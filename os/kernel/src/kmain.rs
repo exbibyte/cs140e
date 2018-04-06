@@ -45,7 +45,8 @@ pub extern "C" fn kmain() {
     use console::{ kprintln };
     use pi::atags::*;
     use std::iter;
-
+    use fat32::traits::{ FileSystem, Entry, Dir, File };
+    
     pi::timer::spin_sleep_ms(1000);
 
     kprintln!( "iterating through ATAGS.." );
@@ -81,13 +82,26 @@ pub extern "C" fn kmain() {
     
     ALLOCATOR.initialize();
 
-    // let mut v = vec![];
-    // for i in 0..10 {
-    //     v.push(i);
-    //     kprintln!("{:?}", v);
-    // }
+    // FILE_SYSTEM.initialize();
 
-    // let s = String::from( "hi!" );
+    kprintln!( "files in root(/): " );
+
+    // let d = match FILE_SYSTEM.open( "/" ) {
+    //     Ok(x) => x,
+    //     Err(e) => {
+    //         kprintln!( "error opening at /: {}", e );
+    //         panic!();
+    //     }
+    // };
+
+    // if let Some(x) = d.as_dir() {
+    //     let mut entries: Vec<_> = x.entries()
+    //         .expect("entries interator")
+    //         .collect();
+    //     for e in entries.iter() {
+    //         kprintln!( "   {}", e.name() );
+    //     }            
+    // }
     
     kprintln!( "starting shell.." );
 

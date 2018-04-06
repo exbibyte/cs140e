@@ -254,7 +254,7 @@ fn test_all_dir_entries() {
     assert_hash_eq!("mock 4 all dir entries", hash, hash_for!("all-entries-4"));
 }
 
-fn hash_file<T: File>(hash: &mut String, mut file: T) -> ::std::fmt::Result {
+fn hash_file<T: File>(hash: &mut String, mut file: T, name: String ) -> ::std::fmt::Result {
     use std::fmt::Write;
     use std::collections::hash_map::DefaultHasher;
     use std::hash::Hasher;
@@ -264,6 +264,8 @@ fn hash_file<T: File>(hash: &mut String, mut file: T) -> ::std::fmt::Result {
     let mut range = Range::new(128, 8192);
     let mut hasher = DefaultHasher::new();
 
+    let mut data = vec![];
+    
     let mut bytes_read = 0;
     loop {
         let mut buffer = vec![0; range.sample(&mut rng)];
@@ -271,15 +273,24 @@ fn hash_file<T: File>(hash: &mut String, mut file: T) -> ::std::fmt::Result {
             Ok(0) => break,
             Ok(n) => {
                 hasher.write(&buffer[..n]);
+                data.extend_from_slice( &buffer[..n] );
                 bytes_read += n as u64;
             }
             Err(e) => panic!("failed to read file: {:?}", e)
         }
     }
 
+    // use std::fs;
+    // let mut s = String::from("temp_out/");
+    // s.push_str( name.as_str() );
+    // fs::create_dir( "temp_out/" ).is_ok();
+    // let mut f = fs::File::create( s ).unwrap();
+    // f.write_all( &data[..] ).unwrap();
+    // println!("  >>  {}, size: {}", name.as_str(), bytes_read );
+    
     assert_eq!(bytes_read, file.size(),
         "expected to read {} bytes (file size) but read {}", file.size(), bytes_read);
-
+    
     write!(hash, "{}", hasher.finish())
 }
 
@@ -300,10 +311,11 @@ fn hash_files_recursive<P: AsRef<Path>>(
         let path = path.join(entry.name());
         if entry.is_file() && !entry.name().starts_with(".BC.T") {
             use std::fmt::Write;
+            let name = String::from( entry.name() );
             let file = entry.into_file().unwrap();
             if file.size() < (1 << 20) {
                 write!(hash, "{}: ", path.display())?;
-                hash_file(hash, file).expect("successful hash");
+                hash_file(hash, file, name ).expect("successful hash");
                 hash.push('\n');
             }
         } else if entry.is_dir() && entry.name() != "." && entry.name() != ".." {
