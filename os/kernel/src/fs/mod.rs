@@ -26,7 +26,8 @@ impl FileSystem {
     ///
     /// Panics if the underlying disk or file sytem failed to initialize.
     pub fn initialize(&self) {
-        let shared_fs = VFat::from( Sd::new().unwrap() ).unwrap();
+        let sd = Sd::new().expect("sd filesystem initialization");
+        let shared_fs = VFat::from( sd ).expect("vfat for sd");
         *self.0.lock() = Some( shared_fs );
     }
 }

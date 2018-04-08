@@ -29,10 +29,10 @@ extern "C" {
 // The `wait_micros` C signature is: `void wait_micros(unsigned int);`
 
 #[no_mangle]
-pub extern "C" fn wait_micros( time_us: u32 ) {
+pub fn wait_micros( time_us: u32 ) {
     use pi;
     // pi::timer::spin_sleep_us( time_us as u64 * 100  );
-    pi::timer::spin_sleep_us( ( time_us as u64 ) * 1000u64 );
+    pi::timer::spin_sleep_us( ( (time_us as u64) * 1000 ) );
 }
 
 #[derive(Debug)]
@@ -51,8 +51,8 @@ pub struct Sd;
 impl Sd {
     /// Initializes the SD card controller and returns a handle to it.
     pub fn new() -> Result<Sd, Error> {
-
-        match unsafe { sd_init() } {
+        let ret :i32 = unsafe { sd_init() };
+        match ret {
             0 => Ok( Sd {} ),
             -1 => Err( Error::Timeout ),
             -2 => Err( Error::SendCommand ),
@@ -76,7 +76,7 @@ impl BlockDevice for Sd {
     /// An error of kind `Other` is returned for all other errors.
     fn read_sector(&mut self, n: u64, buf: &mut [u8]) -> io::Result<usize> {
 
-        if buf.len() < 512 || n >= 1 << 32 {
+        if buf.len() < 512 || n >= (1 << 32) {
             return Err( io::Error::new( io::ErrorKind::InvalidInput, "invalid buffer or read size" ) )
         }
         
@@ -85,7 +85,8 @@ impl BlockDevice for Sd {
         if ret > 0 {
             Ok( ret as usize )
         } else {
-            match unsafe { sd_err } {
+            let err = unsafe { sd_err };
+            match err {
                 -1 => Err( io::Error::new( io::ErrorKind::TimedOut, "timeout" ) ),
                 -2 => Err( io::Error::new( io::ErrorKind::Other, "send command" ) ),
                 _ => Err( io::Error::new( io::ErrorKind::Other, "other error" ) ),

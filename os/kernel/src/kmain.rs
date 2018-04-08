@@ -47,44 +47,44 @@ pub extern "C" fn kmain() {
     use std::iter;
     use fat32::traits::{ FileSystem, Entry, Dir, File };
     
-    pi::timer::spin_sleep_ms(1000);
+    pi::timer::spin_sleep_ms(2000);
 
-    kprintln!( "iterating through ATAGS.." );
+    // kprintln!( "iterating through ATAGS.." );
 
-    let mut atags : pi::atags::Atags = pi::atags::Atags::get();
+    // let mut atags : pi::atags::Atags = pi::atags::Atags::get();
 
-    let mut i = atags.current().unwrap();
-    loop {
-        match i {
-            pi::atags::Atag::Core(x) => {
-                kprintln!( "atag core: {:#?}", x );
-            },
-            pi::atags::Atag::Mem(x) => {
-                kprintln!( "atag mem: {:#?}", x );
-            },
-            pi::atags::Atag::Cmd(x) => {
-                kprintln!( "atag cmd: {:#?}", x );
-            },
-            pi::atags::Atag::None => {
-                kprintln!( "atag none " );
-            },
-            pi::atags::Atag::Unknown( x ) => {
-                kprintln!( "unknown atag: {:#?}", x );
-            },
-        }
-        match atags.next() {
-            Some( x ) => { i = x; },
-            None => { break; },
-        }
-    }
+    // let mut i = atags.current().unwrap();
+    // loop {
+    //     match i {
+    //         pi::atags::Atag::Core(x) => {
+    //             kprintln!( "atag core: {:#?}", x );
+    //         },
+    //         pi::atags::Atag::Mem(x) => {
+    //             kprintln!( "atag mem: {:#?}", x );
+    //         },
+    //         pi::atags::Atag::Cmd(x) => {
+    //             kprintln!( "atag cmd: {:#?}", x );
+    //         },
+    //         pi::atags::Atag::None => {
+    //             kprintln!( "atag none " );
+    //         },
+    //         pi::atags::Atag::Unknown( x ) => {
+    //             kprintln!( "unknown atag: {:#?}", x );
+    //         },
+    //     }
+    //     match atags.next() {
+    //         Some( x ) => { i = x; },
+    //         None => { break; },
+    //     }
+    // }
 
-    kprintln!( "initializing allocators.." );
+    // kprintln!( "initializing allocators.." );
     
     ALLOCATOR.initialize();
 
-    // FILE_SYSTEM.initialize();
+    FILE_SYSTEM.initialize();
 
-    kprintln!( "files in root(/): " );
+    // kprintln!( "files in root(/): " );
 
     // let d = match FILE_SYSTEM.open( "/" ) {
     //     Ok(x) => x,
@@ -102,12 +102,12 @@ pub extern "C" fn kmain() {
     //         kprintln!( "   {}", e.name() );
     //     }            
     // }
-    
-    kprintln!( "starting shell.." );
 
     let mut gpio_16_out = pi::gpio::Gpio::new(16).into_output();
     gpio_16_out.set();
 
+    kprintln!( "starting shell.." );
+    
     shell::shell( "~>" );
 
 }

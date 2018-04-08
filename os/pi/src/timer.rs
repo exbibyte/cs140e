@@ -42,10 +42,9 @@ pub fn current_time() -> u64 {
 
 /// Spins until `us` microseconds have passed.
 pub fn spin_sleep_us(us: u64) {
-    let t = Timer::new();
-    let start = t.read();
+    let start = current_time();
     loop {
-        let now = t.read();
+        let now = current_time();
         if now >= start + us {
             break;
         }
