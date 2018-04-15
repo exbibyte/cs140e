@@ -12,7 +12,7 @@ pub struct CHS {
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct PartitionEntry {
-    boot_indicator: u8,
+    pub boot_indicator: u8,
     _CHS_0: CHS,
     pub partition_type: u8,
     _CHS_1: CHS,

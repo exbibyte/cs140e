@@ -30,7 +30,11 @@ impl VFat {
         for i in 0..4 {
             match mbr.table_entries[i].partition_type {
                 0x0B | 0x0C => {
-                    
+
+                    // if 0x80 != mbr.table_entries[i].boot_indicator {
+                    //     continue;
+                    // }
+
                     let bpb = BiosParameterBlock::from( & mut device, mbr.table_entries[i].relative_sector as _ )?;
 
                     if bpb.num_bytes_per_sector == 0 {

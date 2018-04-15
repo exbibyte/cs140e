@@ -33,9 +33,12 @@ pub extern "C" fn kmain() {
 
     u.set_read_timeout( 750 ); //in ms
 
+    let mut s : & mut [u8] = unsafe { std::slice::from_raw_parts_mut( BINARY_START, MAX_BINARY_SIZE ) };
+
     loop {
-        let s = unsafe { std::slice::from_raw_parts_mut( BINARY_START, MAX_BINARY_SIZE ) };
-        match xmodem::Xmodem::receive( & mut u, std::io::Cursor::new( s ) ) {
+
+        // match xmodem::Xmodem::receive( & mut u, std::io::Cursor::new( s ) ) {
+        match xmodem::Xmodem::receive( & mut u, & mut s ) {
             Err(_) => {
                 // u.write_fmt( format_args!("bootloader retry...\n") ).unwrap();
             },

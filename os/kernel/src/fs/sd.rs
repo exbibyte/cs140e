@@ -31,8 +31,7 @@ extern "C" {
 #[no_mangle]
 pub fn wait_micros( time_us: u32 ) {
     use pi;
-    // pi::timer::spin_sleep_us( time_us as u64 * 100  );
-    pi::timer::spin_sleep_us( ( (time_us as u64) * 1000 ) );
+    pi::timer::spin_sleep_us( ( (time_us as u64) * 100 ) );
 }
 
 #[derive(Debug)]

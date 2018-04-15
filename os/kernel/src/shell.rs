@@ -1,6 +1,13 @@
 use stack_vec::StackVec;
 use console::{kprint, kprintln, CONSOLE};
 use pi::timer;
+use std::path::PathBuf;
+use fs;
+use fat32::traits;
+use cmds;
+use fs::FileSystem;
+
+use FILE_SYSTEM;
 
 /// Error type for `Command` parse failures.
 #[derive(Debug)]
@@ -10,8 +17,9 @@ enum Error {
 }
 
 /// A structure representing a single shell command.
-struct Command<'a> {
-    args: StackVec<'a, &'a str>
+
+pub struct Command<'a> {
+    pub args: StackVec<'a, &'a str>
 }
 
 impl<'a> Command<'a> {
@@ -41,7 +49,9 @@ impl<'a> Command<'a> {
     }
 }
 
-fn flush_to_cmd( input: & str ) {
+///process and branch to specific command handlers
+fn flush_to_cmd<'b>( fs: & FileSystem,
+                        input: & str, fs_path: & mut PathBuf ) {
     let mut b = [ ""; 512 ];
     match Command::parse( input, & mut b[..] ) {
         Err( Error::Empty ) => {
@@ -53,17 +63,20 @@ fn flush_to_cmd( input: & str ) {
         Ok( ref x ) => {
             match x.path() {
                 "echo" => {
-                    let n = x.args.len();
-                    let s = x.args.as_slice().iter().skip(1);
-                    for (k,v) in s.enumerate() {
-                        if k == n - 2 {
-                            kprint!( "{}", v );
-                        } else {
-                            kprint!( "{} ", v );
-                        }
-                    }
-                    kprintln!();
+                    < cmds::CmdEcho as cmds::ShellCmd >::execute( fs, fs_path, x.path(), &x.args.as_slice()[1..] );
                 },
+                "pwd" => {
+                    < cmds::CmdPwd as cmds::ShellCmd >::execute( fs, fs_path, x.path(), &x.args.as_slice()[1..] );   
+                },
+                "ls" => {
+                    < cmds::CmdLs as cmds::ShellCmd >::execute( fs, fs_path, x.path(), &x.args.as_slice()[1..] );
+                },
+                "cd" => {
+                    < cmds::CmdCd as cmds::ShellCmd >::execute( fs, fs_path, x.path(), &x.args.as_slice()[1..] );
+                },
+                "cat" => {
+                    < cmds::CmdCat as cmds::ShellCmd >::execute( fs, fs_path, x.path(), &x.args.as_slice()[1..] );
+                },                
                 _ => {
                     kprintln!("unknown command");
                 },
@@ -102,13 +115,14 @@ fn shift_left( cursor: & mut usize, end: & mut usize, buf: & mut [u8] ) {
 
 /// Starts a shell using `prefix` as the prefix for each line. This function
 /// never returns: it is perpetually in a shell loop.
-pub fn shell(prefix: &str) -> ! {
+pub fn shell(prefix: &str, fs: & FileSystem ) -> ! {
 
     use std::io::Read;
     use std::io::Write;
     use std::str;
     use std::fmt;
-
+    use fat32::traits::{ FileSystem, Entry, Dir, File };
+    
     let mut buf = [0u8; 512];
 
     //indices for cursor and end
@@ -118,6 +132,17 @@ pub fn shell(prefix: &str) -> ! {
     kprint!( "{}", BANNER );
     
     kprint!( "{}", prefix );
+
+    match FILE_SYSTEM.open( "/" ) {
+        Ok(_) => {},
+        Err(e) => {
+            kprintln!( "error opening at /: {}", e );
+            panic!();
+        }
+    };
+
+    let mut fs_path = PathBuf::new();
+    fs_path.push("/");
     
     loop {
         
@@ -132,7 +157,7 @@ pub fn shell(prefix: &str) -> ! {
                 kprintln!();
                 {
                     let s = str::from_utf8( & buf[0..idx_end] ).unwrap_or_default();
-                    flush_to_cmd( s );
+                    flush_to_cmd( &FILE_SYSTEM, s, & mut fs_path );
                 }
                 kprint!( "{}", prefix );
                 for i in 0..idx_end {
@@ -191,5 +216,5 @@ i0::G888,880t.;i;,t.,.t.,L.t;: .:. 88G08.fC1C1iL f8808888G, f88L,:8800;L08888:..
 888tt180088,;,;,;Ct;.;::i,t,.8fGGGt,. :8C880:tttCffCCC1;iL08888888800000GG0C    :11;:,:iiL88888
 88088f0G880:C008888i8,;,,... .,G88i:C,..;888888.1tt;:,............:.:fG1   .,,;8088888888888888
 88GC880808080088G0t88:,:188i:i8;;;8080i,,  ;880888GitL111i1tLfCGL;    88088880888G;   .:;::::::
-~ Welcome to the Sh3|| ~
+~ Welcome to the Sh3ll ~
 "##;
