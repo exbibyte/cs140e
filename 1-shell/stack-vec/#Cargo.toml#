@@ -1,6 +1,0 @@
-
-1;4205;0c[package]
-name = "stack-vec"
-version = "0.1.0"
-
-[dependencies]

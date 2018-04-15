@@ -1,1 +1,0 @@
-UniqueVolatile requires the type T to be additionally Send and Sync when compared to Volatile and thus imposes stronger ownership.

@@ -1,2 +1,0 @@
-The new function is unsafe to indicate a constraint for the caller to satisfy in order for the function to work as intended, in this case a pointer to static lifetime variable.
-Meanwhile, read and write functions are safe since the inner details are taken care of once new method is properly fulfilled and the caller has no need to know about any further constraints.

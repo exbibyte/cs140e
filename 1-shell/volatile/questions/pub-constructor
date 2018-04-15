@@ -1,1 +1,0 @@
-The new method is marked as unsafe to further give the programmer the hint that he/she has to fulfill the implicit requirement that is harder to tell if it is a plain struct initialization.

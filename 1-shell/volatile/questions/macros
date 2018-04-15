@@ -1,1 +1,0 @@
-The macros do the actual enforcement of the volatile read and write tratits on the selected input types.
