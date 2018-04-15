@@ -1,0 +1,6 @@
+[submodule "0-blinky"]
+	path = 0-blinky
+	url = https://github.com/clearlycloudy/cs140e_blinky
+[submodule "1-shell"]
+	path = 1-shell
+	url = https://github.com/clearlycloudy/cs140e_shell

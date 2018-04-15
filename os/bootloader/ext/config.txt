@@ -1,2 +1,0 @@
-kernel_address=0x4000000
-device_tree=
