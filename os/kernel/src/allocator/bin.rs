@@ -430,5 +430,5 @@ impl Allocator {
         // println!( "freelist: {:?}", self.global_freelist );
     }
 }
-//
+
 // FIXME: Implement `Debug` for `Allocator`.
