@@ -3,6 +3,8 @@ Personal assignments to stanford cs140e. Please don't copy if you are a current 
 
 # see os submodule for kernel implementation
 
+# see instructions_* for archived html pages from the course
+
 # screenshots:
 
 ![shell start up](/pics/cs140e_shell_splash.png?raw=true "shell start up")
